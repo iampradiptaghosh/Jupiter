@@ -505,7 +505,7 @@ def output(msg):
         print(msg)
 
 
-def get_resource_data():
+def get_resource_data_drupe():
     """Collect resource profiling information
     """
     print("Starting resource profile collection thread")
@@ -537,7 +537,7 @@ def get_resource_data():
     print("Resource profiles: ", json.dumps(result))
 
 
-def get_network_profile_data():
+def get_network_data_drupe():
     """Collect the network profile from local MongoDB peer
     """
     print('Collecting Netowrk Monitoring Data from MongoDB')
@@ -596,7 +596,19 @@ def get_network_profile_data():
     global is_network_profile_data_ready
     is_network_profile_data_ready = True
 
-
+def profilers_mapping_decorator(f):
+    """Mapping the chosen TA2 module (network and resource monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
+    
+    Args:
+        f (function): either DRUPE or any TA2 modules specified from ``jupiter_config.ini``
+    
+    Returns:
+        function: chosen profiler modules
+    """
+    @wraps(f)
+    def profiler_mapping(*args, **kwargs):
+      return f(*args, **kwargs)
+    return profiler_mapping
     
 def main():
     """
@@ -618,6 +630,13 @@ def main():
     print("Node name:", node_name, "and id", node_id)
     print("Starting the main thread on port", FLASK_PORT)
 
+    global PROFILER
+    PROFILER = int(config['CONFIG']['PROFILER'])
+
+    if PROFILER==0:
+        get_network_data = profilers_mapping_decorator(get_network_data_drupe)
+        get_resource_data = profilers_mapping_decorator(get_resource_data_drupe)
+
     while init_folder() != "ok":  # Initialize the local folers
         pass
 
@@ -625,7 +644,7 @@ def main():
     _thread.start_new_thread(get_resource_data, ())
 
     # Get network profile data
-    _thread.start_new_thread(get_network_profile_data, ())
+    _thread.start_new_thread(get_network_data, ())
 
     _thread.start_new_thread(watcher, ())
     _thread.start_new_thread(distribute, ())
