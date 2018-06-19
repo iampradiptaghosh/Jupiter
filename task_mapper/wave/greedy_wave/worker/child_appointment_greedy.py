@@ -21,6 +21,7 @@ import requests
 from pymongo import MongoClient
 import configparser
 from os import path
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -42,6 +43,9 @@ def prepare_global():
     FLASK_PORT = int(config['PORT']['FLASK_DOCKER'])
     FLASK_SVC  = int(config['PORT']['FLASK_SVC'])
     MONGO_SVC  = int(config['PORT']['MONGO_SVC'])
+
+    global PROFILER
+    PROFILER = int(config['CONFIG']['PROFILER'])
 
     # Get ALL node info
     node_count = 0
@@ -630,8 +634,7 @@ def main():
     print("Node name:", node_name, "and id", node_id)
     print("Starting the main thread on port", FLASK_PORT)
 
-    global PROFILER
-    PROFILER = int(config['CONFIG']['PROFILER'])
+    
 
     if PROFILER==0:
         get_network_data = profilers_mapping_decorator(get_network_data_drupe)

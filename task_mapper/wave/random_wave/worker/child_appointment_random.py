@@ -25,6 +25,7 @@ import datetime
 from pymongo import MongoClient
 import configparser
 from os import path
+from functools import wraps
 
 
 
@@ -46,6 +47,9 @@ def prepare_global():
     FLASK_PORT = int(config['PORT']['FLASK_DOCKER'])
     FLASK_SVC  = int(config['PORT']['FLASK_SVC'])
     MONGO_SVC  = int(config['PORT']['MONGO_SVC'])
+
+    global PROFILER
+    PROFILER = int(config['CONFIG']['PROFILER'])
 
 
     # Get ALL node info
@@ -373,7 +377,7 @@ def output(msg):
         print(msg)
 
 
-def get_resource_data():
+def get_resource_data_drupe():
     """Collect resource profiling information
     """
 
@@ -438,11 +442,11 @@ def main():
     print("Node name:", node_name, "and id", node_id)
     print("Starting the main thread on port", FLASK_PORT)
 
-    global PROFILER
-    PROFILER = int(config['CONFIG']['PROFILER'])
+    
 
     if PROFILER==0:
         get_network_data = profilers_mapping_decorator(get_network_data_drupe)
+        get_resource_data = profilers_mapping_decorator(get_resource_data_drupe)
 
     while init_folder() != "ok": # Initialize the local folders
         pass
