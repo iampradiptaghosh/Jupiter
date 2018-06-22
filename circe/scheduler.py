@@ -5,12 +5,13 @@
 
 """
 
-__author__ = "Aleksandra Knezevic,Pradipta Ghosh, Pranav Sakulkar, Quynh Nguyen,  Jason A Tran and Bhaskar Krishnamachari"
+__author__ = "Aleksandra Knezevic,Pradipta Ghosh, Quynh Nguyen, Pranav Sakulkar,   Jason A Tran and Bhaskar Krishnamachari"
 __copyright__ = "Copyright (c) 2018, Autonomous Networks Research Group. All rights reserved."
 __license__ = "GPL"
-__version__ = "2.0"
+__version__ = "3.0"
 
 import paramiko
+from scp import SCPClient
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import time
@@ -166,6 +167,59 @@ class MonitorRecv(multiprocessing.Process):
         print("Flask server started")
         app.run(host='0.0.0.0', port=FLASK_DOCKER)
 
+def transfer_mapping_decorator(TRANSFER):
+    """Mapping the chosen TA2 module (network and resource monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
+    
+    Args:
+        TRANSFER: transfer method from ``jupiter_config.ini``
+    
+    Returns:
+        function: chosen transfer method
+    """
+    def data_transfer_scp(IP,user,pword,source, destination):
+        """Transfer data using SCP
+        
+        Args:
+            IP (str): destination IP address
+            user (str): destination username
+            pword (str): destination password
+            source (str): source file path
+            destination (str): destination file path
+        """
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        retry = 0
+        print("Starting the connection")
+        print(IP)
+        print(user)
+        print(pword)
+        print(ssh_port)
+        while retry < num_retries:
+            try:
+                ssh.connect(IP, username=user, password=pword, port=ssh_port)
+                scp = SCPClient(client.get_transport())
+                scp.put(source, destination)
+                scp.close()
+                # ssh.connect(IP, username=username, password=password, port=ssh_port)
+                # sftp = ssh.open_sftp()
+                # sftp.put(source, destination)
+                # sftp.close()
+                print('data transfer complete\n')
+                break
+            except:
+                print('SSH connection refused or file transfer failed, will retry in 2 seconds')
+                time.sleep(2)
+                retry += 1
+        ssh.close()
+
+    if TRANSFER==0:
+        return data_transfer_scp
+    return data_transfer_scp
+
+@transfer_mapping_decorator
+def data_transfer(IP,user,pword,source, destination):
+    msg = 'Transfer to IP: %s , username:%s, password: %s,source path: %s , destination path: %s'%(IP,user,pword,source, destination)
+    print(msg)
 
 class MyHandler(PatternMatchingEventHandler):
     """
@@ -269,27 +323,26 @@ class Handler(FileSystemEventHandler):
             #This part should be optimized to avoid hardcoding IP, user and password
             #of the first task node
             IP = os.environ['CHILD_NODES_IPS']
+            source = event.src_path
+            destination = os.path.join('/centralized_scheduler', 'input', new_file_name)
             #IP= 'localpro'
-
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            retry = 0
-            # num_retries = 30
-            print("Starting the connection")
-            while retry < num_retries:
-                try:
-                    ssh.connect(IP, username=username, password=password, port=ssh_port)
-                    sftp = ssh.open_sftp()
-                    sftp.put(event.src_path, os.path.join('/centralized_scheduler', 'input', new_file_name))
-                    sftp.close()
-                    break
-                except:
-                    print('SSH connection refused or file transfer failed, will retry in 2 seconds')
-                    time.sleep(2)
-                    retry += 1
-
-            ssh.close()
-
+            # ssh = paramiko.SSHClient()
+            # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            # retry = 0
+            # print("Starting the connection")
+            # while retry < num_retries:
+            #     try:
+            #         ssh.connect(IP, username=username, password=password, port=ssh_port)
+            #         sftp = ssh.open_sftp()
+            #         sftp.put(event.src_path, os.path.join('/centralized_scheduler', 'input', new_file_name))
+            #         sftp.close()
+            #         break
+            #     except:
+            #         print('SSH connection refused or file transfer failed, will retry in 2 seconds')
+            #         time.sleep(2)
+            #         retry += 1
+            # ssh.close()
+            data_transfer(IP,username, password,source, destination)
 def main():
     """
         -   Read configurations (DAG info, node info) from ``nodes.txt`` and ``configuration.txt``
@@ -313,6 +366,8 @@ def main():
     ssh_port    = int(config['PORT']['SSH_SVC'])
     num_retries = int(config['OTHER']['SSH_RETRY_NUM'])
 
+    global TRANSFER 
+    TRANSFER = int(config['CONFIG']['TRANSFER'])
 
     path1 = 'configuration.txt'
     path2 = 'nodes.txt'

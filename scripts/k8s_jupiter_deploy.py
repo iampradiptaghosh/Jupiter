@@ -111,7 +111,7 @@ def main():
                     if "status" not in data:
                         break
             except:
-                print("Some Exception")
+                print("Waiting for mapping")
         pprint(mapping)
         schedule = k8s_get_hosts(path1, path2, mapping)
         dag = k8s_read_dag(path1)

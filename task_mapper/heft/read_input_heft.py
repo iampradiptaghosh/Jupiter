@@ -99,20 +99,27 @@ def get_exec_profile_data(exec_home_ip, MONGO_SVC_PORT, num_nodes):
         writer.writerows(execution_info)
     return
 
+
 def profilers_mapping_decorator(f):
-    """Mapping the chosen TA2 module (network and resource monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
-    
-    Args:
-        f (function): either DRUPE or any TA2 modules specified from ``jupiter_config.ini``
-    
-    Returns:
-        function: chosen profiler modules
+    """General Mapping decorator function
     """
     @wraps(f)
     def profiler_mapping(*args, **kwargs):
       return f(*args, **kwargs)
     return profiler_mapping
 
+def get_network_data_mapping(PROFILER):
+    """Mapping the chosen TA2 module (network monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
+    
+    Args:
+        PROFILER (str): specified from ``jupiter_config.ini``
+    
+    Returns:
+        TYPE: corresponding network function
+    """
+    if PROFILER==0: 
+        return profilers_mapping_decorator(get_network_data_drupe)
+    return profilers_mapping_decorator(get_network_data_drupe)
 
 def get_network_data_drupe(profiler_ip, MONGO_SVC_PORT, network_map):
     """Collect the network profile from local MongoDB peer
@@ -191,8 +198,8 @@ if __name__ == '__main__':
     print('------------------------------------------------------------')
     print("\n Step 2: Read network profiler information : \n")
 
-    if PROFILER==0:
-        get_network_data = profilers_mapping_decorator(get_network_data_drupe)
+    get_network_data = get_network_data_mapping(PROFILER)
+    
     _thread.start_new_thread(get_network_data, (profiler_ip, MONGO_SVC_PORT,network_map))
 
     print('------------------------------------------------------------')

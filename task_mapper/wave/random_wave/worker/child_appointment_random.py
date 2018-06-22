@@ -400,24 +400,44 @@ def get_resource_data_drupe():
     print("Resource profiles:", data)
 
 def profilers_mapping_decorator(f):
-    """Mapping the chosen TA2 module (network and resource monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
-    
-    Args:
-        f (function): either DRUPE or any TA2 modules specified from ``jupiter_config.ini``
-    
-    Returns:
-        function: chosen profiler modules
+    """General Mapping decorator function
     """
     @wraps(f)
     def profiler_mapping(*args, **kwargs):
       return f(*args, **kwargs)
     return profiler_mapping
 
+def get_network_data_mapping(PROFILER):
+    """Mapping the chosen TA2 module (network monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
+    
+    Args:
+        PROFILER (str): specified from ``jupiter_config.ini``
+    
+    Returns:
+        TYPE: corresponding network function
+    """
+    if PROFILER==0: 
+        return profilers_mapping_decorator(get_network_data_drupe)
+    return profilers_mapping_decorator(get_network_data_drupe)
+
+def get_resource_data_mapping(PROFILER):
+    """Mapping the chosen TA2 module (resource monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
+    
+    Args:
+        PROFILER (str): specified from ``jupiter_config.ini``
+    
+    Returns:
+        TYPE: corresponding resource function
+    """
+    if PROFILER==0: 
+        return profilers_mapping_decorator(get_resource_data_drupe)
+    return profilers_mapping_decorator(get_resource_data_drupe)
+
 def get_network_data_drupe():
     """Collect the network profile from local MongoDB peer
     """
 
-    print('Collecting Netowrk Monitoring Data from MongoDB')
+    print('Collecting Network Monitoring Data from MongoDB')
     client_mongo = MongoClient('mongodb://'+os.environ['PROFILER']+':'+str(MONGO_SVC)+'/')
     db = client_mongo.droplet_network_profiler
     print(db[os.environ['PROFILER']])
@@ -442,11 +462,8 @@ def main():
     print("Node name:", node_name, "and id", node_id)
     print("Starting the main thread on port", FLASK_PORT)
 
-    
-
-    if PROFILER==0:
-        get_network_data = profilers_mapping_decorator(get_network_data_drupe)
-        get_resource_data = profilers_mapping_decorator(get_resource_data_drupe)
+    get_network_data = get_network_data_mapping(PROFILER)
+    get_resource_data = get_resource_data_mapping(PROFILER)
 
     while init_folder() != "ok": # Initialize the local folders
         pass

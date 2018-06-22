@@ -259,58 +259,58 @@ def k8s_exec_scheduler():
         flag = str(value[1])
         nexthosts = nexthosts + 'test'
 
-    #     for i in range(2, len(value)):
-    #         if i != 2:
-    #             next_svc = next_svc + ':'
-    #         next_svc = next_svc + str(service_ips.get(value[i]))
-    #     print("NEXT HOSTS")
-    #     print(nexthosts)
-    #     print("NEXT SVC")
-    #     print(next_svc)
+        for i in range(2, len(value)):
+            if i != 2:
+                next_svc = next_svc + ':'
+            next_svc = next_svc + str(service_ips.get(value[i]))
+        print("NEXT HOSTS")
+        print(nexthosts)
+        print("NEXT SVC")
+        print(next_svc)
 
-    #     if taskmap[key][1] == False:
-    #         #Generate the yaml description of the required deployment for each task
-    #         dep = write_exec_specs_non_dag_tasks(flag = str(flag), inputnum = str(inputnum), name = task, node_name = task,
-    #             image = jupiter_config.WORKER_IMAGE, child = nexthosts,
-    #             child_ips = next_svc,
-    #             home_node_ip = service_ips.get("home"),
-    #             own_ip = service_ips[key],
-    #             all_node = all_node,
-    #             all_node_ips = all_node_ips)
-    #         pprint(dep)
+        if taskmap[key][1] == False:
+            #Generate the yaml description of the required deployment for each task
+            dep = write_exec_specs_non_dag_tasks(flag = str(flag), inputnum = str(inputnum), name = task, node_name = task,
+                image = jupiter_config.WORKER_IMAGE, child = nexthosts,
+                child_ips = next_svc,
+                home_node_ip = service_ips.get("home"),
+                own_ip = service_ips[key],
+                all_node = all_node,
+                all_node_ips = all_node_ips)
+            pprint(dep)
 
 
-    #         # # Call the Kubernetes API to create the deployment
-    #         resp = k8s_beta.create_namespaced_deployment(body = dep, namespace = namespace)
-    #         print("Deployment created. status = '%s'" % str(resp.status))
+            # # Call the Kubernetes API to create the deployment
+            resp = k8s_beta.create_namespaced_deployment(body = dep, namespace = namespace)
+            print("Deployment created. status = '%s'" % str(resp.status))
 
-    # for i in nodes:
+    for i in nodes:
 
-    #     # print nodes[i][0]
+        # print nodes[i][0]
 
-    #     """
-    #         We check whether the node is a scheduler.
-    #         Since we do not run any task on the scheduler, we donot run any profiler on it as well.
-    #     """
-    #     if i != 'home':
+        """
+            We check whether the node is a scheduler.
+            Since we do not run any task on the scheduler, we donot run any profiler on it as well.
+        """
+        if i != 'home':
 
-    #         """
-    #             Generate the yaml description of the required deployment for the profiles
-    #         """
-    #         dep = write_exec_specs(name = i, label = i + "exec_profiler", node_name = i, image = jupiter_config.EXEC_WORKER_IMAGE,
-    #                                          host = nodes[i][0], home_node_ip = service_ips['home'])
-    #         # # pprint(dep)
-    #         # # Call the Kubernetes API to create the deployment
-    #         resp = k8s_beta.create_namespaced_deployment(body = dep, namespace = namespace)
-    #         print("Deployment created. status ='%s'" % str(resp.status))
+            """
+                Generate the yaml description of the required deployment for the profiles
+            """
+            dep = write_exec_specs(name = i, label = i + "exec_profiler", node_name = i, image = jupiter_config.EXEC_WORKER_IMAGE,
+                                             host = nodes[i][0], home_node_ip = service_ips['home'])
+            # # pprint(dep)
+            # # Call the Kubernetes API to create the deployment
+            resp = k8s_beta.create_namespaced_deployment(body = dep, namespace = namespace)
+            print("Deployment created. status ='%s'" % str(resp.status))
 
-    # """
-    #     Check if all the tera detectors are running
-    # """
-    # while 1:
-    #     if check_status_exec_profiler():
-    #         break
-    #     time.sleep(30)
+    """
+        Check if all the tera detectors are running
+    """
+    while 1:
+        if check_status_exec_profiler():
+            break
+        time.sleep(30)
 
     task = 'home'
     key = 'home'
