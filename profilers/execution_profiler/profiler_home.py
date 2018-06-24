@@ -130,36 +130,21 @@ def transfer_mapping_decorator(TRANSFER=0):
             source (str): source file path
             destination (str): destination file path
         """
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         #Keep retrying in case the containers are still building/booting up on
         #the child nodes.
         retry = 0
-        print(IP)
-        print(user)
-        print(pword)
-        print(ssh_port)
-        print(source)
-        print(destination)
         while retry < num_retries:
             try:
-                # ssh.connect(IP, username=user, password=pword, port=ssh_port)
-                # scp = SCPClient(client.get_transport())
-                # scp.put(source, destination)
-                # scp.close()
-                ssh.connect(IP, username=user, password=pword, port=ssh_port)
-                sftp = ssh.open_sftp()
-                sftp.put(source, destination)
-                sftp.close()
+                print(IP)
+                cmd = "sshpass -p %s scp -P %s -o StrictHostKeyChecking=no -r %s %s@%s:%s" % (pword, ssh_port, source, user, IP, destination)
+                os.system(cmd)
                 print('data transfer complete\n')
                 break
             except:
-                print('SSH Connection refused or File transfer failed, will retry in 2 seconds')
+                print('profiler_home.txt: SSH Connection refused or File transfer failed, will retry in 2 seconds')
                 time.sleep(2)
                 retry += 1
-
-        ssh.close()
 
     if TRANSFER==0:
         return data_transfer_scp
@@ -316,6 +301,11 @@ def main():
         i = profilers_ips[itr]
         print("Sending data to ", allprofiler_names[itr])
         data_transfer(i,username,password,ptFile, ptFile1)
+        print(password)
+        print(ssh_port)
+        print(ptFile)
+        print(ptFile1)
+        print(i)
         # cmd = "sshpass -p %s scp -P %s -o StrictHostKeyChecking=no -r %s %s:%s" % (password, ssh_port, ptFile, i, ptFile1)
         #os.system(cmd)
 

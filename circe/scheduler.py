@@ -181,36 +181,30 @@ def transfer_mapping_decorator(TRANSFER):
         
         Args:
             IP (str): destination IP address
-            user (str): destination username
-            pword (str): destination password
+            user (str): username
+            pword (str): password
             source (str): source file path
             destination (str): destination file path
         """
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        retry = 0
-        print("Starting the connection")
+        #Keep retrying in case the containers are still building/booting up on
+        #the child nodes.
+
+        #             ssh.connect(IP, username=user, password=pword, port=ssh_port)
+        #             scp = SCPClient(client.get_transport())
+        #             scp.put(source, destination)
+        #             scp.close() 
         print(IP)
-        print(user)
-        print(pword)
-        print(ssh_port)
+        retry = 0
         while retry < num_retries:
             try:
-                ssh.connect(IP, username=user, password=pword, port=ssh_port)
-                scp = SCPClient(client.get_transport())
-                scp.put(source, destination)
-                scp.close()
-                # ssh.connect(IP, username=username, password=password, port=ssh_port)
-                # sftp = ssh.open_sftp()
-                # sftp.put(source, destination)
-                # sftp.close()
+                cmd = "sshpass -p %s scp -P %s -o StrictHostKeyChecking=no -r %s %s@%s:%s" % (pword, ssh_port, source, user, IP, destination)
+                os.system(cmd)
                 print('data transfer complete\n')
                 break
             except:
-                print('SSH connection refused or file transfer failed, will retry in 2 seconds')
+                print('profiler_worker.txt: SSH Connection refused or File transfer failed, will retry in 2 seconds')
                 time.sleep(2)
                 retry += 1
-        ssh.close()
 
     if TRANSFER==0:
         return data_transfer_scp
