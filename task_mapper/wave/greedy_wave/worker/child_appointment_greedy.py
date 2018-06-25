@@ -608,7 +608,7 @@ def profilers_mapping_decorator(f):
       return f(*args, **kwargs)
     return profiler_mapping
 
-def get_network_data_mapping(PROFILER):
+def get_network_data_mapping(PROFILER=0):
     """Mapping the chosen TA2 module (network monitor) based on ``jupiter_config.PROFILER`` in ``jupiter_config.ini``
     
     Args:
